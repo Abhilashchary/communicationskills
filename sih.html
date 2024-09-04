@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Recognition App</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Speech Recognition and Comparison</h1>
+        <div class="text-center">
+            <button id="start-recording" class="btn btn-primary">Start Recording</button>
+            <button id="stop-recording" class="btn btn-danger" disabled>Stop Recording</button>
+        </div>
+
+        <div class="mt-4">
+            <p><strong>Transcribed Text:</strong> <span id="transcribed-text" class="text-success"></span></p>
+            
+            <div class="form-group">
+                <label for="reference-text">Reference Text:</label>
+                <input type="text" id="reference-text" class="form-control" placeholder="Enter reference text" disabled>
+            </div>
+            <div class="text-center">
+                <button id="generate-text" class="btn btn-secondary" disabled>Generate Reference Text</button>
+                <button id="compare-text" class="btn btn-info" disabled>Compare</button>
+            </div>
+        </div>
+
+        <p class="mt-4"><strong>Score:</strong> <span id="score" class="text-warning"></span></p>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        const startButton = document.getElementById('start-recording');
+        const stopButton = document.getElementById('stop-recording');
+        const transcribedTextElement = document.getElementById('transcribed-text');
+        const referenceTextElement = document.getElementById('reference-text');
+        const scoreElement = document.getElementById('score');
+        const generateTextButton = document.getElementById('generate-text');
+        const compareTextButton = document.getElementById('compare-text');
+
+        let recognition;
+
+        // Check for browser support
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                transcribedTextElement.textContent = transcript;
+
+                stopButton.disabled = true;
+                startButton.disabled = false;
+                generateTextButton.disabled = false;
+            };
+
+            recognition.onerror = function(event) {
+                console.error(event.error);
+            };
+        } else {
+            alert('Speech recognition not supported in this browser.');
+        }
+
+        startButton.onclick = function() {
+            recognition.start();
+            startButton.disabled = true;
+            stopButton.disabled = false;
+        };
+
+        stopButton.onclick = function() {
+            recognition.stop();
+        };
+
+        generateTextButton.onclick = async function() {
+            // Call the AI function to generate corrected text
+            const generatedText = await generateReferenceText(transcribedTextElement.textContent);
+            referenceTextElement.value = generatedText;
+            referenceTextElement.disabled = false;
+            compareTextButton.disabled = false;
+        };
+
+        compareTextButton.onclick = function() {
+            const transcribedText = transcribedTextElement.textContent.toLowerCase();
+            const referenceText = referenceTextElement.value.toLowerCase();
+            const score = compareTexts(transcribedText, referenceText);
+            scoreElement.textContent = score.toFixed(2) + '%';
+        };
+
+        // Function to call AI service for text generation
+        async function generateReferenceText(originalText) {
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer YOUR_API_KEY` // Replace with your actual API key
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-3.5-turbo",
+                        messages: [{ role: "user", content: `Please correct the following text: "${originalText}"` }]
+                    })
+                });
+
+                const data = await response.json();
+                return data.choices[0].message.content; // Return the corrected text
+            } catch (error) {
+                console.error('Error generating reference text:', error);
+                return originalText; // Fallback to original text in case of error
+            }
+        }
+
+        // Improved comparison function
+        function compareTexts(transcribed, reference) {
+            const transcribedWords = transcribed.split(' ').filter(Boolean);
+            const referenceWords = reference.split(' ').filter(Boolean);
+            const matches = transcribedWords.filter(word => referenceWords.includes(word)).length;
+            return (matches / Math.max(transcribedWords.length, referenceWords.length)) * 100;
+        }
+    </script>
+</body>
+</html>
