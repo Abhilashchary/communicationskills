@@ -2,12 +2,6 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/Abhilashchary/communicationskills.git'
-            }
-        }
-
         stage('Build') {
             steps {
                 echo 'No build needed for static site'
