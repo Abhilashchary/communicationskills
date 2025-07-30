@@ -4,7 +4,14 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-               git branch: 'main', url: 'https://github.com/Abhilashchary/communicationskills.git'
+                git branch: 'main', url: 'https://github.com/Abhilashchary/communicationskills.git'
+            }
+        }
+
+        stage('Debug Workspace') {
+            steps {
+                echo 'Listing workspace files for debugging...'
+                bat 'dir /S'
             }
         }
 
@@ -29,9 +36,16 @@ pipeline {
 
                 git checkout -B gh-pages
 
-                echo Cleaning old files...
-                git rm -r --cached . >nul 2>&1
-                del /Q /F /S * >nul 2>&1 || echo No files to delete
+                echo Cleaning tracked files but preserving .git folder...
+                git rm -r --cached .
+
+                rem Delete all files and folders except .git
+                for /d %%D in (*) do (
+                    if /I not "%%D"==".git" rmdir /S /Q "%%D"
+                )
+                for %%F in (*) do (
+                    if /I not "%%F"==".git" del /Q /F "%%F"
+                )
 
                 echo Listing docs folder content for debugging:
                 dir docs
