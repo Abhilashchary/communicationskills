@@ -8,22 +8,9 @@ pipeline {
             }
         }
 
-        stage('Debug Workspace') {
-            steps {
-                echo 'Workspace listing for debug:'
-                bat 'dir /S'
-            }
-        }
-
         stage('Build') {
             steps {
                 echo 'No build needed for static site'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                echo 'No tests configured'
             }
         }
 
@@ -36,25 +23,17 @@ pipeline {
 
                 git checkout -B gh-pages
 
-                echo Cleaning tracked files but preserving .git folder...
+                echo Cleaning old files...
                 git rm -r --cached .
 
-                rem Delete all files/folders except .git
-                for /d %%D in (*) do (
-                    if /I not "%%D"==".git" rmdir /S /Q "%%D"
-                )
-                for %%F in (*) do (
-                    if /I not "%%F"==".git" del /Q /F "%%F"
-                )
+                rem Delete all files/folders except .git folder
+                for /d %%D in (*) do if /I not "%%D"==".git" rmdir /S /Q "%%D"
+                for %%F in (*) do if /I not "%%F"==".git" del /Q /F "%%F"
 
-                echo Listing docs folder content:
-                dir docs
-
-                echo Copying site files from docs to current directory...
-                xcopy /E /Y /I docs\\* .
+                rem Copy all files from the workspace (original branch) to current folder
+                xcopy /E /Y /I ..\\* .
 
                 git add -A
-
                 git diff --cached --quiet || git commit -m "Deploy via Jenkins [ci skip]"
                 git push -f origin gh-pages
                 '''
