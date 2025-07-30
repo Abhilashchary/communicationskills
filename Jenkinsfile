@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/yourusername/your-repo-name.git'
+                git 'https://github.com/Abhilashchary/communicationskills.git'
             }
         }
 
@@ -16,7 +16,7 @@ pipeline {
 
         stage('Test') {
             steps {
-                echo 'No tests for now'
+                echo 'No tests configured'
             }
         }
 
