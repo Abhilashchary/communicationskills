@@ -39,10 +39,11 @@ pipeline {
                 echo Cleaning tracked files but preserving .git folder...
                 git rm -r --cached .
 
-                rem Delete all files and folders except .git
+                rem Delete all folders except .git
                 for /d %%D in (*) do (
                     if /I not "%%D"==".git" rmdir /S /Q "%%D"
                 )
+                rem Delete all files except .git
                 for %%F in (*) do (
                     if /I not "%%F"==".git" del /Q /F "%%F"
                 )
