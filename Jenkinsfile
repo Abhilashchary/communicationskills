@@ -10,7 +10,7 @@ pipeline {
 
         stage('Debug Workspace') {
             steps {
-                echo 'Listing workspace files for debugging...'
+                echo 'Workspace listing for debug:'
                 bat 'dir /S'
             }
         }
@@ -39,22 +39,22 @@ pipeline {
                 echo Cleaning tracked files but preserving .git folder...
                 git rm -r --cached .
 
-                rem Delete all folders except .git
+                rem Delete all files/folders except .git
                 for /d %%D in (*) do (
                     if /I not "%%D"==".git" rmdir /S /Q "%%D"
                 )
-                rem Delete all files except .git
                 for %%F in (*) do (
                     if /I not "%%F"==".git" del /Q /F "%%F"
                 )
 
-                echo Listing docs folder content for debugging:
+                echo Listing docs folder content:
                 dir docs
 
-                echo Copying site files from docs...
+                echo Copying site files from docs to current directory...
                 xcopy /E /Y /I docs\\* .
 
                 git add -A
+
                 git diff --cached --quiet || git commit -m "Deploy via Jenkins [ci skip]"
                 git push -f origin gh-pages
                 '''
