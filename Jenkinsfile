@@ -2,6 +2,12 @@ pipeline {
     agent any
 
     stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/Abhilashchary/communicationskills.git'
+            }
+        }
+
         stage('Build') {
             steps {
                 echo 'No build needed for static site'
@@ -21,8 +27,10 @@ pipeline {
                 git config user.name "jenkins"
                 git config user.email "jenkins@example.com"
                 git checkout -B gh-pages
-                git add -f .
-                git commit -m "Deploy via Jenkins [ci skip]"
+                echo Copying site files...
+                xcopy /E /Y /I docs\\* .
+                git add -A
+                git diff --cached --quiet || git commit -m "Deploy via Jenkins [ci skip]"
                 git push -f origin gh-pages
                 '''
             }
